@@ -1,0 +1,71 @@
+@startuml
+package Managers {
+    class SceneManager #Orange {
+        nowScene
+        nextScene
+    }
+    enum GameScene #Orange {
+        Menu
+        Play
+    }
+    SceneManager --> GameScene
+    class GameInitializer #Orange {
+        initialize()
+    }
+    GameInitializer -> PlayManager
+    GameInitializer -> BoardManager
+
+    class PlayManager #Orange {
+        isBlackTurn
+        endGameType
+        isEndGame()
+        +changeTurn()
+        calcScore()
+    }
+    enum endGameType #Orange {
+        playing
+        calculating
+        showing
+    }
+    PlayManager --> endGameType
+    class BoardManager #Orange {
+        gameBoard
+        endBoardMap
+        +initializeBoard()
+    }
+    PlayManager -> BoardManager
+}
+package Board {
+    class GameBoard #Orange {
+        boardMap
+        +setStone()
+        updateBoardImage()
+        +makeEndBoard()
+        +canSet()
+    }
+    BoardManager -> GameBoard
+    enum BoardType #Orange {
+        empty
+        black_stone
+        white_stone
+        wall
+        black_space
+        white_space
+    }
+    GameBoard --> BoardType
+}
+package Stone {
+    interface ISettable #Orange {
+        +move()
+        +set()
+    }
+    interface IMagnet #Orange {
+        +magnetEffect()
+    }
+    class Stone #Orange {
+    }
+    Stone --> ISettable
+    Stone --> IMagnet
+}
+GameBoard -> Stone
+@enduml
