@@ -51,9 +51,15 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.Black)
+
 	for i := 0; i < boardX; i = i + 1 {
 		for j := 0; j < boardY; j = j + 1 {
 			if g.board[i][j].state != 0 {
+				img_opt := &ebiten.DrawImageOptions{}
+				img := images["white"]
+				img_width, img_height := img.Size()
+				img_opt.GeoM.Translate(-float64(img_width)/2, -float64(img_height)/2)
+				screen.DrawImage(images["white"], img_opt)
 				ebitenutil.DebugPrintAt(screen, "O", g.outboardSpaceX+i*g.panelSpan, g.outboardSpaceY+j*g.panelSpan)
 			}
 		}
@@ -92,7 +98,9 @@ func (g *Game) init() {
 		"black": "assets/images/go_black.png",
 	}
 	for key, value := range imageSourceMap {
-		loadImage(key, value)
+		if err := loadImage(key, value); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 

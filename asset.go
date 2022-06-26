@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"embed"
 	"image"
+	_ "image/png"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+//go:embed assets
 var FS embed.FS
 
 var (
