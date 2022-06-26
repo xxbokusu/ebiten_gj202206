@@ -1,8 +1,9 @@
 package main
 
 import (
-	"image/color"
 	"log"
+
+	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -50,10 +51,20 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.Black)
+
 	for i := 0; i < boardX; i = i + 1 {
 		for j := 0; j < boardY; j = j + 1 {
 			if g.board[i][j].state != 0 {
-				ebitenutil.DebugPrintAt(screen, "O", g.outboardSpaceX+i*g.panelSpan, g.outboardSpaceY+j*g.panelSpan)
+				img_opt := &ebiten.DrawImageOptions{}
+				img := images["white"]
+				img_width, img_height := img.Size()
+				img_opt.GeoM.Scale(
+					float64(g.panelSpan)/float64(img_width),
+					float64(g.panelSpan)/float64(img_height))
+				img_opt.GeoM.Translate(
+					float64(g.outboardSpaceX+i*g.panelSpan-g.panelSpan/2),
+					float64(g.outboardSpaceY+j*g.panelSpan-g.panelSpan/2))
+				screen.DrawImage(img, img_opt)
 			}
 		}
 		ebitenutil.DrawLine(screen,
@@ -83,6 +94,16 @@ func (g *Game) init() {
 	for i := 0; i < boardX; i = i + 1 {
 		for j := 0; j < boardY; j = j + 1 {
 			g.board[i][j].state = 0
+		}
+	}
+
+	imageSourceMap := map[string]string{
+		"white": "assets/images/go_white.png",
+		"black": "assets/images/go_black.png",
+	}
+	for key, value := range imageSourceMap {
+		if err := loadImage(key, value); err != nil {
+			log.Fatal(err)
 		}
 	}
 }
