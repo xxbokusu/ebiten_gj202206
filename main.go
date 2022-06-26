@@ -1,8 +1,9 @@
 package main
 
 import (
-	"image/color"
 	"log"
+
+	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -84,6 +85,14 @@ func (g *Game) init() {
 		for j := 0; j < boardY; j = j + 1 {
 			g.board[i][j].state = 0
 		}
+	}
+
+	imageSourceMap := map[string]string{
+		"white": "assets/images/go_white.png",
+		"black": "assets/images/go_black.png",
+	}
+	for key, value := range imageSourceMap {
+		loadImage(key, value)
 	}
 }
 
