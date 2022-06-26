@@ -58,9 +58,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				img_opt := &ebiten.DrawImageOptions{}
 				img := images["white"]
 				img_width, img_height := img.Size()
-				img_opt.GeoM.Translate(-float64(img_width)/2, -float64(img_height)/2)
-				screen.DrawImage(images["white"], img_opt)
-				ebitenutil.DebugPrintAt(screen, "O", g.outboardSpaceX+i*g.panelSpan, g.outboardSpaceY+j*g.panelSpan)
+				img_opt.GeoM.Scale(
+					float64(g.panelSpan)/float64(img_width),
+					float64(g.panelSpan)/float64(img_height))
+				img_opt.GeoM.Translate(
+					float64(g.outboardSpaceX+i*g.panelSpan-g.panelSpan/2),
+					float64(g.outboardSpaceY+j*g.panelSpan-g.panelSpan/2))
+				screen.DrawImage(img, img_opt)
 			}
 		}
 		ebitenutil.DrawLine(screen,
