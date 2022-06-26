@@ -29,6 +29,8 @@ type Game struct {
 	panelSpan      int
 	outboardSpaceX int
 	outboardSpaceY int
+
+	isBlackTurn bool
 }
 
 func (g *Game) isKeyJustPressed() bool {
@@ -43,8 +45,12 @@ func (g *Game) Update() error {
 		cursorX, cursorY := ebiten.CursorPosition()
 		selectedPosX := (cursorX - g.outboardSpaceX) / g.panelSpan
 		selectedPosY := (cursorY - g.outboardSpaceY) / g.panelSpan
-		g.board[selectedPosX][selectedPosY].state = 1
-
+		if g.isBlackTurn {
+			g.board[selectedPosX][selectedPosY].state = 1
+		} else {
+			g.board[selectedPosX][selectedPosY].state = 2
+		}
+		g.isBlackTurn = !g.isBlackTurn
 	}
 	return nil
 }
@@ -53,20 +59,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.Black)
 
 	for i := 0; i < boardX; i = i + 1 {
-		for j := 0; j < boardY; j = j + 1 {
-			if g.board[i][j].state != 0 {
-				img_opt := &ebiten.DrawImageOptions{}
-				img := images["white"]
-				img_width, img_height := img.Size()
-				img_opt.GeoM.Scale(
-					float64(g.panelSpan)/float64(img_width),
-					float64(g.panelSpan)/float64(img_height))
-				img_opt.GeoM.Translate(
-					float64(g.outboardSpaceX+i*g.panelSpan-g.panelSpan/2),
-					float64(g.outboardSpaceY+j*g.panelSpan-g.panelSpan/2))
-				screen.DrawImage(img, img_opt)
-			}
-		}
 		ebitenutil.DrawLine(screen,
 			float64(g.outboardSpaceX+i*g.panelSpan),
 			0,
@@ -79,7 +71,28 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			screenX,
 			float64(g.outboardSpaceY+i*g.panelSpan),
 			color.White)
+		for j := 0; j < boardY; j = j + 1 {
+			if g.board[i][j].state == 2 {
+				g.DrawStone(screen, "white", i, j)
+			} else if g.board[i][j].state == 1 {
+				g.DrawStone(screen, "black", i, j)
+			}
+		}
+
 	}
+}
+func (g *Game) DrawStone(screen *ebiten.Image, name string, posX, posY int) error {
+	img_opt := &ebiten.DrawImageOptions{}
+	img := images[name]
+	img_width, img_height := img.Size()
+	img_opt.GeoM.Scale(
+		float64(g.panelSpan)/float64(img_width),
+		float64(g.panelSpan)/float64(img_height))
+	img_opt.GeoM.Translate(
+		float64(g.outboardSpaceX+posX*g.panelSpan-g.panelSpan/2),
+		float64(g.outboardSpaceY+posY*g.panelSpan-g.panelSpan/2))
+	screen.DrawImage(img, img_opt)
+	return nil
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -106,6 +119,8 @@ func (g *Game) init() {
 			log.Fatal(err)
 		}
 	}
+
+	g.isBlackTurn = true
 }
 
 // NewGame method
