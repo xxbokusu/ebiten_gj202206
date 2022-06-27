@@ -19,6 +19,8 @@ const (
 	boardY = 9
 )
 
+var ()
+
 type board_panel struct {
 	state int
 }
@@ -32,7 +34,7 @@ type Game struct {
 
 	isBlackTurn bool
 
-	doCompletePlayAudio bool
+	canPlayAudio bool
 }
 
 func (g *Game) isKeyJustPressed() bool {
@@ -43,10 +45,10 @@ func (g *Game) isKeyJustPressed() bool {
 }
 
 func (g *Game) Update() error {
-	if !g.doCompletePlayAudio {
+	if !g.canPlayAudio {
 		select {
-		case <-loadAudioCompleteCh:
-			g.doCompletePlayAudio = true
+		case <-playAudioCompleteCh:
+			g.canPlayAudio = true
 		default:
 		}
 		return nil
@@ -76,8 +78,8 @@ func (g *Game) UpdateBoardState(posX, posY int) error {
 	}
 	g.isBlackTurn = !g.isBlackTurn
 
-	g.doCompletePlayAudio = false
-	playAudio("assets/se/set_stone.mp3")
+	g.canPlayAudio = false
+	playAudio("set_stone")
 
 	return nil
 }
@@ -162,8 +164,19 @@ func (g *Game) init() {
 
 	}
 
+	audioSourceMap := map[string]string{
+		"set_stone": "assets/se/set_stone.mp3",
+	}
+	for key, value := range audioSourceMap {
+		if err := loadAudio(key, value); err != nil {
+			log.Fatal(err)
+		}
+
+	}
+	playAudio("set_stone")
+
+	g.canPlayAudio = true
 	g.isBlackTurn = true
-	g.doCompletePlayAudio = true
 }
 
 // NewGame method

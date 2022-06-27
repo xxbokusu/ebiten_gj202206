@@ -23,7 +23,8 @@ var (
 	images = map[string]*ebiten.Image{}
 
 	audioContext        = audio.NewContext(sampleRate)
-	loadAudioCompleteCh = make(chan struct{})
+	audioBytes          = map[string][]byte{}
+	playAudioCompleteCh chan struct{}
 )
 
 func loadImage(destName string, sourceName string) error {
@@ -41,15 +42,19 @@ func loadImage(destName string, sourceName string) error {
 	return nil
 }
 
-func playAudio(sourceName string) {
-	go func() {
-		loadAudioCompleteCh = make(chan struct{})
-		byteData, err := FS.ReadFile(sourceName)
-		if err != nil {
-			log.Fatal(err)
-		}
+func loadAudio(destName, sourceName string) error {
+	byteData, err := FS.ReadFile(sourceName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	audioBytes[destName] = byteData
+	return nil
+}
 
-		stream, err := mp3.DecodeWithSampleRate(sampleRate, bytes.NewReader(byteData))
+func playAudio(name string) {
+	go func() {
+		playAudioCompleteCh = make(chan struct{})
+		stream, err := mp3.DecodeWithSampleRate(sampleRate, bytes.NewReader(audioBytes[name]))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -59,6 +64,6 @@ func playAudio(sourceName string) {
 			log.Fatal(err)
 		}
 		audioPlayer.Play()
-		close(loadAudioCompleteCh)
+		close(playAudioCompleteCh)
 	}()
 }
