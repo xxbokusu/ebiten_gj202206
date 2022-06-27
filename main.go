@@ -31,6 +31,8 @@ type Game struct {
 	outboardSpaceY int
 
 	isBlackTurn bool
+
+	doCompletePlayAudio bool
 }
 
 func (g *Game) isKeyJustPressed() bool {
@@ -41,6 +43,15 @@ func (g *Game) isKeyJustPressed() bool {
 }
 
 func (g *Game) Update() error {
+	if !g.doCompletePlayAudio {
+		select {
+		case <-loadAudioCompleteCh:
+			g.doCompletePlayAudio = true
+		default:
+		}
+		return nil
+	}
+
 	if g.isKeyJustPressed() {
 		cursorX, cursorY := ebiten.CursorPosition()
 		selectedPosX := (cursorX - g.outboardSpaceX) / g.panelSpan
@@ -64,6 +75,9 @@ func (g *Game) UpdateBoardState(posX, posY int) error {
 		g.board[posX][posY].state = 2
 	}
 	g.isBlackTurn = !g.isBlackTurn
+
+	g.doCompletePlayAudio = false
+	playAudio("assets/se/set_stone.mp3")
 
 	return nil
 }
@@ -145,9 +159,11 @@ func (g *Game) init() {
 		if err := loadImage(key, value); err != nil {
 			log.Fatal(err)
 		}
+
 	}
 
 	g.isBlackTurn = true
+	g.doCompletePlayAudio = true
 }
 
 // NewGame method
