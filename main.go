@@ -115,7 +115,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		cursorX, cursorY := ebiten.CursorPosition()
 		selectedPosX := (cursorX - g.outboardSpaceX) / g.panelSpan
 		selectedPosY := (cursorY - g.outboardSpaceY) / g.panelSpan
-		g.DrawStone(screen, "frame", selectedPosX, selectedPosY)
+		if g.isBlackTurn {
+			g.DrawStone(screen, "frame_black", selectedPosX, selectedPosY)
+		} else {
+			g.DrawStone(screen, "frame_white", selectedPosX, selectedPosY)
+		}
 	}
 }
 
@@ -153,9 +157,10 @@ func (g *Game) init() {
 	}
 
 	imageSourceMap := map[string]string{
-		"white": "assets/images/go_white.png",
-		"black": "assets/images/go_black.png",
-		"frame": "assets/images/go_frame_yellow.png",
+		"white":       "assets/images/go_white.png",
+		"black":       "assets/images/go_black.png",
+		"frame_white": "assets/images/go_frame_white.png",
+		"frame_black": "assets/images/go_frame_black.png",
 	}
 	for key, value := range imageSourceMap {
 		if err := loadImage(key, value); err != nil {
