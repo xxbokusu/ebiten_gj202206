@@ -85,7 +85,7 @@ func (g *Game) init() {
 // NewGame method
 func NewGame() *Game {
 	g := &Game{}
-	g.SceneTransition(&PlayScene{})
+	g.SceneTransition(&TitleScene{})
 	g.init()
 	return g
 }
