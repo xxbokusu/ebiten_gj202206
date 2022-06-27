@@ -49,6 +49,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 func (g *Game) SceneTransition(scene Scene) {
 	g.next_scene = scene
+	g.next_scene.init()
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -56,7 +57,6 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func (g *Game) init() {
-	g.now_scene.init()
 	imageSourceMap := map[string]string{
 		"white":       "assets/images/go_white.png",
 		"black":       "assets/images/go_black.png",
@@ -84,9 +84,8 @@ func (g *Game) init() {
 
 // NewGame method
 func NewGame() *Game {
-	g := &Game{
-		now_scene: &PlayScene{},
-	}
+	g := &Game{}
+	g.SceneTransition(&PlayScene{})
 	g.init()
 	return g
 }
