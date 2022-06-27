@@ -19,6 +19,8 @@ const (
 	boardY = 9
 )
 
+var ()
+
 type board_panel struct {
 	state int
 }
@@ -31,6 +33,8 @@ type Game struct {
 	outboardSpaceY int
 
 	isBlackTurn bool
+
+	canPlayAudio bool
 }
 
 func (g *Game) isKeyJustPressed() bool {
@@ -41,6 +45,15 @@ func (g *Game) isKeyJustPressed() bool {
 }
 
 func (g *Game) Update() error {
+	if !g.canPlayAudio {
+		select {
+		case <-playAudioCompleteCh:
+			g.canPlayAudio = true
+		default:
+		}
+		return nil
+	}
+
 	if g.isKeyJustPressed() {
 		cursorX, cursorY := ebiten.CursorPosition()
 		selectedPosX := (cursorX - g.outboardSpaceX) / g.panelSpan
@@ -64,6 +77,9 @@ func (g *Game) UpdateBoardState(posX, posY int) error {
 		g.board[posX][posY].state = 2
 	}
 	g.isBlackTurn = !g.isBlackTurn
+
+	g.canPlayAudio = false
+	playAudio("set_stone")
 
 	return nil
 }
@@ -145,8 +161,21 @@ func (g *Game) init() {
 		if err := loadImage(key, value); err != nil {
 			log.Fatal(err)
 		}
+
 	}
 
+	audioSourceMap := map[string]string{
+		"set_stone": "assets/se/set_stone.mp3",
+	}
+	for key, value := range audioSourceMap {
+		if err := loadAudio(key, value); err != nil {
+			log.Fatal(err)
+		}
+
+	}
+	playAudio("set_stone")
+
+	g.canPlayAudio = true
 	g.isBlackTurn = true
 }
 
