@@ -100,34 +100,81 @@ func (s *PlayScene) SetGoStone(posX, posY int) error {
 	s.canPlayAudio = false
 	playAudio("set_stone")
 
-	s.addAccel(posX-1, posY, -1, 0)
-	s.addAccel(posX, posY-1, 0, -1)
-	s.addAccel(posX+1, posY, 1, 0)
-	s.addAccel(posX, posY+1, 0, 1)
+	s.makeMagneticForce(posX, posY)
 
 	return nil
 }
 
-func (s *PlayScene) addAccel(srcX, srcY int, accelX, accelY float64) {
-	if s.board[srcX][srcY].stone == nil {
-		return
+func (s *PlayScene) makeMagneticForce(srcX, srcY int) {
+	src_stone := s.board[srcX][srcY].stone
+	if srcX-2 >= 0 { // 移動先スペースが必要
+		if dest_stone := s.board[srcX-1][srcY].stone; dest_stone != nil {
+			if s.board[srcX-2][srcY].stone == nil {
+				if dest_stone.isNorth == src_stone.isNorth {
+					dest_stone.accelX += -1 // 反発力
+					s.board[srcX-2][srcY].stone = dest_stone
+					s.board[srcX-1][srcY].stone = nil
+				}
+			}
+		} else if dest_stone := s.board[srcX-2][srcY].stone; dest_stone != nil {
+			if dest_stone.isNorth != src_stone.isNorth {
+				dest_stone.accelX += 1 // 引力
+				s.board[srcX-1][srcY].stone = dest_stone
+				s.board[srcX-2][srcY].stone = nil
+			}
+		}
 	}
-	if srcX+int(accelX) < 0 || srcX+int(accelX) > boardX {
-		return
+	if srcY-2 >= 0 {
+		if dest_stone := s.board[srcX][srcY-1].stone; dest_stone != nil {
+			if s.board[srcX][srcY-2].stone == nil {
+				if dest_stone.isNorth == src_stone.isNorth {
+					dest_stone.accelY += -1 // 反発力
+					s.board[srcX][srcY-2].stone = dest_stone
+					s.board[srcX][srcY-1].stone = nil
+				}
+			}
+		} else if dest_stone := s.board[srcX][srcY-2].stone; dest_stone != nil {
+			if dest_stone.isNorth != src_stone.isNorth {
+				dest_stone.accelY += 1 // 引力
+				s.board[srcX][srcY-1].stone = dest_stone
+				s.board[srcX][srcY-2].stone = nil
+			}
+		}
 	}
-	if srcY+int(accelY) < 0 || srcY+int(accelY) > boardY {
-		return
+	if srcX+2 <= boardX {
+		if dest_stone := s.board[srcX+1][srcY].stone; dest_stone != nil {
+			if s.board[srcX+2][srcY].stone == nil {
+				if dest_stone.isNorth == src_stone.isNorth {
+					dest_stone.accelX += 1 // 反発力
+					s.board[srcX+2][srcY].stone = dest_stone
+					s.board[srcX+1][srcY].stone = nil
+				}
+			}
+		} else if dest_stone := s.board[srcX+2][srcY].stone; dest_stone != nil {
+			if dest_stone.isNorth != src_stone.isNorth {
+				dest_stone.accelX += -1 // 引力
+				s.board[srcX+1][srcY].stone = dest_stone
+				s.board[srcX+2][srcY].stone = nil
+			}
+		}
 	}
-	dextX := srcX + int(accelX)
-	destY := srcY + int(accelY)
-	if s.board[dextX][destY].stone != nil {
-		return
+	if srcY+2 <= boardY {
+		if dest_stone := s.board[srcX][srcY+1].stone; dest_stone != nil {
+			if s.board[srcX][srcY+2].stone == nil {
+				if dest_stone.isNorth == src_stone.isNorth {
+					dest_stone.accelY += 1 // 反発力
+					s.board[srcX][srcY+2].stone = dest_stone
+					s.board[srcX][srcY+1].stone = nil
+				}
+			}
+		} else if dest_stone := s.board[srcX][srcY+2].stone; dest_stone != nil {
+			if dest_stone.isNorth != src_stone.isNorth {
+				dest_stone.accelY += -1 // 引力
+				s.board[srcX][srcY+1].stone = dest_stone
+				s.board[srcX][srcY+2].stone = nil
+			}
+		}
 	}
-	s.board[srcX][srcY].stone.accelX += accelX
-	s.board[srcX][srcY].stone.accelY += accelY
-
-	s.board[dextX][destY].stone = s.board[srcX][srcY].stone
-	s.board[srcX][srcY].stone = nil
 }
 
 func (s *PlayScene) Draw(screen *ebiten.Image) {
