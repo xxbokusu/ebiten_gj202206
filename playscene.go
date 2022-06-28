@@ -11,6 +11,9 @@ import (
 type GoStone struct {
 	isBlack bool
 	isNorth bool
+
+	accelX float64
+	accelY float64
 }
 
 func (gs *GoStone) getStoneImgString() string {
@@ -54,6 +57,7 @@ func (s *PlayScene) isKeyJustPressed() bool {
 }
 
 func (s *PlayScene) Update(manager SceneTransitionManager) error {
+
 	if !s.canPlayAudio {
 		select {
 		case <-playAudioCompleteCh:
@@ -67,12 +71,12 @@ func (s *PlayScene) Update(manager SceneTransitionManager) error {
 		cursorX, cursorY := ebiten.CursorPosition()
 		selectedPosX := (cursorX - s.outboardSpaceX) / s.panelSpan
 		selectedPosY := (cursorY - s.outboardSpaceY) / s.panelSpan
-		s.UpdateBoardState(selectedPosX, selectedPosY)
+		s.SetGoStone(selectedPosX, selectedPosY)
 	}
 	return nil
 }
 
-func (s *PlayScene) UpdateBoardState(posX, posY int) error {
+func (s *PlayScene) SetGoStone(posX, posY int) error {
 	if posX >= boardX || posY >= boardY {
 		return nil
 	}
@@ -84,6 +88,8 @@ func (s *PlayScene) UpdateBoardState(posX, posY int) error {
 	stone := GoStone{
 		isBlack: s.isBlackTurn,
 		isNorth: s.isNorth,
+		accelX:  0,
+		accelY:  0,
 	}
 	s.board[posX][posY].stone = &stone
 	s.isBlackTurn = !s.isBlackTurn
@@ -94,7 +100,34 @@ func (s *PlayScene) UpdateBoardState(posX, posY int) error {
 	s.canPlayAudio = false
 	playAudio("set_stone")
 
+	s.addAccel(posX-1, posY, -1, 0)
+	s.addAccel(posX, posY-1, 0, -1)
+	s.addAccel(posX+1, posY, 1, 0)
+	s.addAccel(posX, posY+1, 0, 1)
+
 	return nil
+}
+
+func (s *PlayScene) addAccel(srcX, srcY int, accelX, accelY float64) {
+	if s.board[srcX][srcY].stone == nil {
+		return
+	}
+	if srcX+int(accelX) < 0 || srcX+int(accelX) > boardX {
+		return
+	}
+	if srcY+int(accelY) < 0 || srcY+int(accelY) > boardY {
+		return
+	}
+	dextX := srcX + int(accelX)
+	destY := srcY + int(accelY)
+	if s.board[dextX][destY].stone != nil {
+		return
+	}
+	s.board[srcX][srcY].stone.accelX += accelX
+	s.board[srcX][srcY].stone.accelY += accelY
+
+	s.board[dextX][destY].stone = s.board[srcX][srcY].stone
+	s.board[srcX][srcY].stone = nil
 }
 
 func (s *PlayScene) Draw(screen *ebiten.Image) {
@@ -117,7 +150,13 @@ func (s *PlayScene) Draw(screen *ebiten.Image) {
 	for i := 0; i < boardX; i = i + 1 {
 		for j := 0; j < boardY; j = j + 1 {
 			if s.board[i][j].stone != nil {
-				s.DrawStone(screen, s.board[i][j].stone.getStoneImgString(), i, j)
+				s.board[i][j].stone.accelX *= 0.8
+				s.board[i][j].stone.accelY *= 0.8
+				s.DrawStone(screen,
+					s.board[i][j].stone.getStoneImgString(),
+					float64(i)-s.board[i][j].stone.accelX,
+					float64(j)-s.board[i][j].stone.accelY,
+				)
 			}
 		}
 	}
@@ -131,11 +170,11 @@ func (s *PlayScene) Draw(screen *ebiten.Image) {
 			isBlack: s.isBlackTurn,
 			isNorth: s.isNorth,
 		}
-		s.DrawStone(screen, "frame_"+setting_stone.getStoneImgString(), selectedPosX, selectedPosY)
+		s.DrawStone(screen, "frame_"+setting_stone.getStoneImgString(), float64(selectedPosX), float64(selectedPosY))
 	}
 }
 
-func (s *PlayScene) DrawStone(screen *ebiten.Image, name string, posX, posY int) error {
+func (s *PlayScene) DrawStone(screen *ebiten.Image, name string, posX, posY float64) error {
 	if posX >= boardX || posY >= boardY {
 		return nil
 	}
@@ -145,10 +184,12 @@ func (s *PlayScene) DrawStone(screen *ebiten.Image, name string, posX, posY int)
 	img_width, img_height := img.Size()
 	img_opt.GeoM.Scale(
 		float64(s.panelSpan)/float64(img_width),
-		float64(s.panelSpan)/float64(img_height))
+		float64(s.panelSpan)/float64(img_height),
+	)
 	img_opt.GeoM.Translate(
-		float64(s.outboardSpaceX+posX*s.panelSpan-s.panelSpan/2),
-		float64(s.outboardSpaceY+posY*s.panelSpan-s.panelSpan/2))
+		float64(s.outboardSpaceX-s.panelSpan/2)+posX*float64(s.panelSpan),
+		float64(s.outboardSpaceY-s.panelSpan/2)+posY*float64(s.panelSpan),
+	)
 	screen.DrawImage(img, img_opt)
 	return nil
 }
