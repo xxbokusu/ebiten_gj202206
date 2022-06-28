@@ -8,18 +8,40 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-type board_panel struct {
-	state int
+type GoStone struct {
+	isBlack bool
+	isNorth bool
+}
+
+func (gs *GoStone) getStoneImgString() string {
+	var str string
+	if gs.isBlack {
+		str += "black"
+	} else {
+		str += "white"
+	}
+
+	if gs.isNorth {
+		str += "_n"
+	} else {
+		str += "_s"
+	}
+	return str
+}
+
+type BoardPanel struct {
+	stone *GoStone
 }
 
 type PlayScene struct {
-	board [boardX][boardY]board_panel
+	board [boardX][boardY]BoardPanel
 
 	panelSpan      int
 	outboardSpaceX int
 	outboardSpaceY int
 
 	isBlackTurn bool
+	isNorth     bool
 
 	canPlayAudio bool
 }
@@ -55,16 +77,19 @@ func (s *PlayScene) UpdateBoardState(posX, posY int) error {
 		return nil
 	}
 
-	if s.board[posX][posY].state != 0 {
+	if s.board[posX][posY].stone != nil {
 		return nil
 	}
 
-	if s.isBlackTurn {
-		s.board[posX][posY].state = 1
-	} else {
-		s.board[posX][posY].state = 2
+	stone := GoStone{
+		isBlack: s.isBlackTurn,
+		isNorth: s.isNorth,
 	}
+	s.board[posX][posY].stone = &stone
 	s.isBlackTurn = !s.isBlackTurn
+	if s.isBlackTurn {
+		s.isNorth = !s.isNorth
+	}
 
 	s.canPlayAudio = false
 	playAudio("set_stone")
@@ -77,24 +102,22 @@ func (s *PlayScene) Draw(screen *ebiten.Image) {
 	for i := 0; i < boardX; i = i + 1 {
 		ebitenutil.DrawLine(screen,
 			float64(s.outboardSpaceX+i*s.panelSpan),
-			0,
+			float64(s.outboardSpaceY),
 			float64(s.outboardSpaceX+i*s.panelSpan),
-			screenY,
+			screenY-float64(s.outboardSpaceY),
 			color.White)
 		ebitenutil.DrawLine(screen,
-			0,
+			float64(s.outboardSpaceX),
 			float64(s.outboardSpaceY+i*s.panelSpan),
-			screenX,
+			screenX-float64(s.outboardSpaceX),
 			float64(s.outboardSpaceY+i*s.panelSpan),
 			color.White)
 	}
 
 	for i := 0; i < boardX; i = i + 1 {
 		for j := 0; j < boardY; j = j + 1 {
-			if s.board[i][j].state == 2 {
-				s.DrawStone(screen, "white", i, j)
-			} else if s.board[i][j].state == 1 {
-				s.DrawStone(screen, "black", i, j)
+			if s.board[i][j].stone != nil {
+				s.DrawStone(screen, s.board[i][j].stone.getStoneImgString(), i, j)
 			}
 		}
 	}
@@ -103,11 +126,12 @@ func (s *PlayScene) Draw(screen *ebiten.Image) {
 		cursorX, cursorY := ebiten.CursorPosition()
 		selectedPosX := (cursorX - s.outboardSpaceX) / s.panelSpan
 		selectedPosY := (cursorY - s.outboardSpaceY) / s.panelSpan
-		if s.isBlackTurn {
-			s.DrawStone(screen, "frame_black", selectedPosX, selectedPosY)
-		} else {
-			s.DrawStone(screen, "frame_white", selectedPosX, selectedPosY)
+
+		setting_stone := &GoStone{
+			isBlack: s.isBlackTurn,
+			isNorth: s.isNorth,
 		}
+		s.DrawStone(screen, "frame_"+setting_stone.getStoneImgString(), selectedPosX, selectedPosY)
 	}
 }
 
@@ -136,10 +160,11 @@ func (s *PlayScene) init() {
 	// board initialize
 	for i := 0; i < boardX; i = i + 1 {
 		for j := 0; j < boardY; j = j + 1 {
-			s.board[i][j].state = 0
+			s.board[i][j].stone = nil
 		}
 	}
 
 	s.canPlayAudio = true
 	s.isBlackTurn = true
+	s.isNorth = true
 }

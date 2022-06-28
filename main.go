@@ -58,10 +58,14 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func (g *Game) init() {
 	imageSourceMap := map[string]string{
-		"white":       "assets/images/go_white.png",
-		"black":       "assets/images/go_black.png",
-		"frame_white": "assets/images/go_frame_white.png",
-		"frame_black": "assets/images/go_frame_black.png",
+		"white_n":       "assets/images/go_white_n.png",
+		"black_n":       "assets/images/go_black_n.png",
+		"frame_white_n": "assets/images/go_frame_white_n.png",
+		"frame_black_n": "assets/images/go_frame_black_n.png",
+		"white_s":       "assets/images/go_white_s.png",
+		"black_s":       "assets/images/go_black_s.png",
+		"frame_white_s": "assets/images/go_frame_white_s.png",
+		"frame_black_s": "assets/images/go_frame_black_s.png",
 	}
 	for key, value := range imageSourceMap {
 		if err := loadImage(key, value); err != nil {
