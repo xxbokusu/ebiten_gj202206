@@ -75,7 +75,8 @@ func (g *Game) init() {
 	}
 
 	audioSourceMap := map[string]string{
-		"set_stone": "assets/se/set_stone.mp3",
+		"set_stone":   "assets/se/set_stone.mp3",
+		"force_stone": "assets/se/force_stone.mp3",
 	}
 	for key, value := range audioSourceMap {
 		if err := loadAudio(key, value); err != nil {

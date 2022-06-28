@@ -114,6 +114,7 @@ func (s *PlayScene) makeMagneticForce(srcX, srcY int) {
 					dest_stone.accelX += -1 // 反発力
 					s.board[srcX-2][srcY].stone = dest_stone
 					s.board[srcX-1][srcY].stone = nil
+					s.makeMagneticForce(srcX-2, srcY)
 				}
 			}
 		} else if dest_stone := s.board[srcX-2][srcY].stone; dest_stone != nil {
@@ -121,6 +122,7 @@ func (s *PlayScene) makeMagneticForce(srcX, srcY int) {
 				dest_stone.accelX += 1 // 引力
 				s.board[srcX-1][srcY].stone = dest_stone
 				s.board[srcX-2][srcY].stone = nil
+				s.makeMagneticForce(srcX-1, srcY)
 			}
 		}
 	}
@@ -131,6 +133,7 @@ func (s *PlayScene) makeMagneticForce(srcX, srcY int) {
 					dest_stone.accelY += -1 // 反発力
 					s.board[srcX][srcY-2].stone = dest_stone
 					s.board[srcX][srcY-1].stone = nil
+					s.makeMagneticForce(srcX, srcY-2)
 				}
 			}
 		} else if dest_stone := s.board[srcX][srcY-2].stone; dest_stone != nil {
@@ -138,10 +141,11 @@ func (s *PlayScene) makeMagneticForce(srcX, srcY int) {
 				dest_stone.accelY += 1 // 引力
 				s.board[srcX][srcY-1].stone = dest_stone
 				s.board[srcX][srcY-2].stone = nil
+				s.makeMagneticForce(srcX, srcY-1)
 			}
 		}
 	}
-	if srcX+2 <= boardX {
+	if srcX+2 < boardX {
 		if dest_stone := s.board[srcX+1][srcY].stone; dest_stone != nil {
 			if s.board[srcX+2][srcY].stone == nil {
 				if dest_stone.isNorth == src_stone.isNorth {
@@ -158,7 +162,7 @@ func (s *PlayScene) makeMagneticForce(srcX, srcY int) {
 			}
 		}
 	}
-	if srcY+2 <= boardY {
+	if srcY+2 < boardY {
 		if dest_stone := s.board[srcX][srcY+1].stone; dest_stone != nil {
 			if s.board[srcX][srcY+2].stone == nil {
 				if dest_stone.isNorth == src_stone.isNorth {
@@ -242,9 +246,9 @@ func (s *PlayScene) DrawStone(screen *ebiten.Image, name string, posX, posY floa
 }
 
 func (s *PlayScene) init() {
-	s.outboardSpaceX = screenX / (boardX + 2) / 2
-	s.outboardSpaceY = screenY / (boardY + 2) / 2
-	s.panelSpan = s.outboardSpaceY * 2
+	s.outboardSpaceY = screenY / (boardY + 2)
+	s.panelSpan = s.outboardSpaceY
+	s.outboardSpaceX = (screenX - s.panelSpan*boardX) / 2
 	// board initialize
 	for i := 0; i < boardX; i = i + 1 {
 		for j := 0; j < boardY; j = j + 1 {
