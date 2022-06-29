@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -208,6 +209,19 @@ func (s *PlayScene) makeMagneticForce(srcX, srcY int) {
 func (s *PlayScene) Draw(screen *ebiten.Image) {
 	screen.Fill(color.Black)
 	for i := 0; i < boardX; i = i + 1 {
+		number_string := fmt.Sprint(i + 1)
+		text.Draw(screen,
+			number_string,
+			normal_font,
+			s.outboardSpaceX+i*s.panelSpan-5,
+			s.outboardSpaceY-27,
+			color.White)
+		text.Draw(screen,
+			number_string,
+			normal_font,
+			s.outboardSpaceX-40,
+			s.outboardSpaceY+i*s.panelSpan,
+			color.White)
 		ebitenutil.DrawLine(screen,
 			float64(s.outboardSpaceX+i*s.panelSpan),
 			float64(s.outboardSpaceY),
