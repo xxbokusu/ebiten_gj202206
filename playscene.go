@@ -6,6 +6,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/hajimehoshi/ebiten/v2/text"
 )
 
 type GoStone struct {
@@ -47,22 +48,29 @@ type PlayScene struct {
 	isNorth     bool
 
 	canPlayAudio bool
+
+	passFlag           bool
+	isBeforeTurnPassed bool
+	gameEndFlag        bool
 }
 
 func (s *PlayScene) isKeyJustPressed() bool {
-	if inpututil.IsKeyJustPressed(ebiten.KeySpace) || inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		return true
-	}
-	return false
+	return inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
 }
 
 func (s *PlayScene) Update(manager SceneTransitionManager) error {
-
 	if !s.canPlayAudio {
 		select {
 		case <-playAudioCompleteCh:
 			s.canPlayAudio = true
 		default:
+		}
+		return nil
+	}
+
+	if s.gameEndFlag {
+		if s.isKeyJustPressed() {
+			manager.SceneTransition(&TitleScene{})
 		}
 		return nil
 	}
@@ -78,12 +86,25 @@ func (s *PlayScene) Update(manager SceneTransitionManager) error {
 
 func (s *PlayScene) SetGoStone(posX, posY int) error {
 	if posX >= boardX || posY >= boardY {
+		if s.passFlag {
+			s.changeTurn()
+			s.passFlag = false
+			if s.isBeforeTurnPassed {
+				s.gameEndFlag = true
+			} else {
+				s.isBeforeTurnPassed = true
+			}
+		} else {
+			s.passFlag = true
+		}
 		return nil
 	}
 
 	if s.board[posX][posY].stone != nil {
 		return nil
 	}
+	s.passFlag = false
+	s.isBeforeTurnPassed = false
 
 	stone := GoStone{
 		isBlack: s.isBlackTurn,
@@ -92,10 +113,7 @@ func (s *PlayScene) SetGoStone(posX, posY int) error {
 		accelY:  0,
 	}
 	s.board[posX][posY].stone = &stone
-	s.isBlackTurn = !s.isBlackTurn
-	if s.isBlackTurn {
-		s.isNorth = !s.isNorth
-	}
+	s.changeTurn()
 
 	s.canPlayAudio = false
 	playAudio("set_stone")
@@ -103,6 +121,12 @@ func (s *PlayScene) SetGoStone(posX, posY int) error {
 	s.makeMagneticForce(posX, posY)
 
 	return nil
+}
+func (s *PlayScene) changeTurn() {
+	s.isBlackTurn = !s.isBlackTurn
+	if s.isBlackTurn {
+		s.isNorth = !s.isNorth
+	}
 }
 
 func (s *PlayScene) makeMagneticForce(srcX, srcY int) {
@@ -198,6 +222,38 @@ func (s *PlayScene) Draw(screen *ebiten.Image) {
 			color.White)
 	}
 
+	if s.gameEndFlag {
+		rule_msg := "Game Over. For decide who win, Please count each territory."
+		r := text.BoundString(normal_font, rule_msg)
+		x := screenX/2 - r.Dx()/2
+		y := (screenY - s.outboardSpaceY) + r.Dy()/2
+		text.Draw(screen, rule_msg, normal_font, x, y, color.RGBA{byte(0x00), byte(0xff), byte(0xff), byte(0xff)})
+		rule_msg = "To play next game, Press mouse button and move title"
+		r = text.BoundString(normal_font, rule_msg)
+		x = screenX/2 - r.Dx()/2
+		y = (screenY - s.outboardSpaceY/2) + r.Dy()/2
+		text.Draw(screen, rule_msg, normal_font, x, y, color.White)
+	} else {
+		if s.passFlag {
+			rule_msg := "If press outside board one more, pass your turn."
+			r := text.BoundString(normal_font, rule_msg)
+			x := screenX/2 - r.Dx()/2
+			y := (screenY - s.outboardSpaceY) + r.Dy()/2
+			text.Draw(screen, rule_msg, normal_font, x, y, color.RGBA{byte(0xff), byte(0xff), byte(0x00), byte(0xff)})
+		} else {
+			rule_msg := "For pass your turn, press outside board twice."
+			r := text.BoundString(normal_font, rule_msg)
+			x := screenX/2 - r.Dx()/2
+			y := (screenY - s.outboardSpaceY) + r.Dy()/2
+			text.Draw(screen, rule_msg, normal_font, x, y, color.White)
+			rule_msg = "And each player passed turns continuously, end game"
+			r = text.BoundString(normal_font, rule_msg)
+			x = screenX/2 - r.Dx()/2
+			y = (screenY - s.outboardSpaceY/2) + r.Dy()/2
+			text.Draw(screen, rule_msg, normal_font, x, y, color.White)
+		}
+	}
+
 	for i := 0; i < boardX; i = i + 1 {
 		for j := 0; j < boardY; j = j + 1 {
 			if s.board[i][j].stone != nil {
@@ -259,4 +315,7 @@ func (s *PlayScene) init() {
 	s.canPlayAudio = true
 	s.isBlackTurn = true
 	s.isNorth = true
+	s.passFlag = false
+	s.isBeforeTurnPassed = false
+	s.gameEndFlag = false
 }
