@@ -188,12 +188,12 @@ func (s *PlayScene) Draw(screen *ebiten.Image) {
 			float64(s.outboardSpaceX+i*s.panelSpan),
 			float64(s.outboardSpaceY),
 			float64(s.outboardSpaceX+i*s.panelSpan),
-			screenY-float64(s.outboardSpaceY),
+			screenY-float64(s.outboardSpaceY)*2,
 			color.White)
 		ebitenutil.DrawLine(screen,
 			float64(s.outboardSpaceX),
 			float64(s.outboardSpaceY+i*s.panelSpan),
-			screenX-float64(s.outboardSpaceX),
+			screenX-float64(s.outboardSpaceX)-float64(s.panelSpan),
 			float64(s.outboardSpaceY+i*s.panelSpan),
 			color.White)
 	}

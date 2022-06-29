@@ -10,6 +10,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/audio/mp3"
+	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/opentype"
 )
 
 const (
@@ -25,6 +28,9 @@ var (
 	audioContext        = audio.NewContext(sampleRate)
 	audioBytes          = map[string][]byte{}
 	playAudioCompleteCh chan struct{}
+
+	big_font    font.Face
+	normal_font font.Face
 )
 
 func loadImage(destName string, sourceName string) error {
@@ -66,4 +72,31 @@ func playAudio(name string) {
 		audioPlayer.Play()
 		close(playAudioCompleteCh)
 	}()
+}
+
+func loadFont() error {
+	tt, err := opentype.Parse(fonts.MPlus1pRegular_ttf)
+	if err != nil {
+		return err
+	}
+
+	const dpi = 72
+	normal_font, err = opentype.NewFace(tt, &opentype.FaceOptions{
+		Size:    24,
+		DPI:     dpi,
+		Hinting: font.HintingFull,
+	})
+	if err != nil {
+		return err
+	}
+	big_font, err = opentype.NewFace(tt, &opentype.FaceOptions{
+		Size:    72,
+		DPI:     dpi,
+		Hinting: font.HintingFull,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
